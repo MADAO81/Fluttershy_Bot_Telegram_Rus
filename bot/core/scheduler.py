@@ -1,14 +1,15 @@
 # bot/core/scheduler.py
 """
-Планировщик задач для бота Пинки Пай.
-Ежедневная отправка рецептов в 12:00.
+Планировщик для бота Флаттершай.
+Отправка утреннего приветствия в 9:00 и рассказа о животном в 11:00.
 
 Автор: MADAO81
-Версия: 2.1 (с сохранением подписок в БД)
+Версия: 2.0
 """
 
 import logging
 import sqlite3
+import random
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from bot.config import Config
@@ -17,19 +18,15 @@ from bot.services.recipe_service import RecipeService
 logger = logging.getLogger(__name__)
 
 scheduler = AsyncIOScheduler()
-recipe_service = RecipeService()
 
-# Путь к БД
-DB_PATH = Config.DATA_DIR / "recipes.db"
+DB_PATH = Config.DATA_DIR / "animals.db"
 
 
 def _get_connection():
-    """Возвращает соединение с БД."""
     return sqlite3.connect(DB_PATH)
 
 
 def _init_db():
-    """Создаёт таблицу подписок, если её нет."""
     conn = _get_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -43,18 +40,16 @@ def _init_db():
 
 
 def add_chat(chat_id: int):
-    """Добавляет чат для ежедневной рассылки."""
     _init_db()
     conn = _get_connection()
     cursor = conn.cursor()
     cursor.execute("INSERT OR IGNORE INTO subscriptions (chat_id) VALUES (?)", (chat_id,))
     conn.commit()
     conn.close()
-    logger.info(f"📋 Чат {chat_id} добавлен для рассылки рецептов")
+    logger.info(f"📋 Чат {chat_id} добавлен для рассылки")
 
 
 def remove_chat(chat_id: int):
-    """Удаляет чат из рассылки."""
     _init_db()
     conn = _get_connection()
     cursor = conn.cursor()
@@ -65,7 +60,6 @@ def remove_chat(chat_id: int):
 
 
 def get_active_chats():
-    """Возвращает список активных чатов из БД."""
     _init_db()
     conn = _get_connection()
     cursor = conn.cursor()
@@ -75,31 +69,68 @@ def get_active_chats():
     return [row[0] for row in rows]
 
 
-async def send_daily_recipe(app):
-    """
-    Отправка ежедневного рецепта всем активным чатам.
-    """
+async def send_morning_greeting(app):
+    """Отправляет утреннее приветствие в 9:00."""
     active_chats = get_active_chats()
-
     if not active_chats:
-        logger.info("📭 Нет активных чатов для рассылки рецептов")
+        logger.info("📭 Нет активных чатов для утреннего приветствия")
         return
 
-    logger.info(f"📅 Отправка ежедневного рецепта в {len(active_chats)} чатов...")
+    logger.info(f"🌅 Отправка утреннего приветствия в {len(active_chats)} чатов...")
+
+    greetings = [
+        "🌸 *Доброе утро!* Пусть этот день будет наполнен теплом, уютом и маленькими радостями. Помни: ты — замечательная(ый), и я верю в тебя! 🦋",
+        "🌼 *С добрым утром!* Я надеюсь, что сегодня у тебя будет много поводов для улыбки. А если что-то пойдёт не так — я всегда рядом, чтобы поддержать тебя. 💕",
+        "🌻 *Привет!* Сегодня новый день, а значит — новые возможности. Ты справишься со всем, что бы ни случилось. Я в тебя верю! 🐇",
+        "🦋 *Доброе утро!* Пусть солнечный свет согревает тебя, а моя мысль о тебе дарит уют. Береги себя и своё сердце. 🌸",
+    ]
+
+    greeting = random.choice(greetings)
+
+    for chat_id in active_chats:
+        try:
+            await app.bot.send_message(
+                chat_id=chat_id,
+                text=greeting,
+                parse_mode="Markdown"
+            )
+            logger.info(f"✅ Утреннее приветствие отправлено в чат {chat_id}")
+        except Exception as e:
+            logger.error(f"❌ Ошибка отправки в чат {chat_id}: {e}")
+            if "bot was blocked" in str(e) or "chat not found" in str(e):
+                remove_chat(chat_id)
+
+
+async def send_daily_animal(app):
+    """Отправляет рассказ о животном в 11:00."""
+    active_chats = get_active_chats()
+    if not active_chats:
+        logger.info("📭 Нет активных чатов для рассказа о животном")
+        return
+
+    logger.info(f"🐾 Отправка рассказа о животном в {len(active_chats)} чатов...")
 
     try:
-        recipe = await recipe_service.get_random_recipe()
+        conn = _get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT name, scientific_name, habitat, diet, fun_fact, description FROM animals ORDER BY RANDOM() LIMIT 1")
+        animal = cursor.fetchone()
+        conn.close()
 
-        if not recipe:
-            logger.warning("⚠️ Не удалось получить рецепт")
+        if not animal:
+            logger.warning("⚠️ Нет животных в базе данных")
             return
 
+        name, scientific_name, habitat, diet, fun_fact, description = animal
+
         message = (
-            f"🧁 *Вот что я испекла для тебя сегодня!*\n\n"
-            f"*{recipe['title']}*\n\n"
-            f"📝 *Ингредиенты:*\n{recipe['ingredients']}\n\n"
-            f"👩‍🍳 *Приготовление:*\n{recipe['instructions']}\n\n"
-            f"Приятного аппетита! 🎂 Не забудь позвать меня на чай! ☕"
+            f"🐾 *Сегодня я расскажу тебе о {name}*\n\n"
+            f"*Научное название:* {scientific_name or 'неизвестно'}\n"
+            f"*Среда обитания:* {habitat}\n"
+            f"*Питание:* {diet}\n"
+            f"*Интересный факт:* {fun_fact}\n\n"
+            f"📖 *Подробнее:*\n{description}\n\n"
+            f"🌸 Надеюсь, тебе было интересно! У каждого животного есть своя удивительная история. 💕"
         )
 
         for chat_id in active_chats:
@@ -109,39 +140,48 @@ async def send_daily_recipe(app):
                     text=message,
                     parse_mode="Markdown"
                 )
-                logger.info(f"✅ Рецепт отправлен в чат {chat_id}")
+                logger.info(f"✅ Рассказ о животном отправлен в чат {chat_id}")
             except Exception as e:
                 logger.error(f"❌ Ошибка отправки в чат {chat_id}: {e}")
                 if "bot was blocked" in str(e) or "chat not found" in str(e):
                     remove_chat(chat_id)
 
     except Exception as e:
-        logger.error(f"❌ Ошибка при отправке рецепта: {e}")
+        logger.error(f"❌ Ошибка при отправке рассказа о животном: {e}")
 
 
 def start_scheduler(app):
-    """Запуск планировщика."""
+    """Запускает планировщик."""
     try:
         _init_db()
-        hour, minute = map(int, Config.RECIPE_SEND_TIME.split(':'))
 
+        # Утреннее приветствие в 9:00
         scheduler.add_job(
-            send_daily_recipe,
-            CronTrigger(hour=hour, minute=minute),
+            send_morning_greeting,
+            CronTrigger(hour=9, minute=0),
             args=[app],
-            id='daily_recipe',
+            id='morning_greeting',
+            replace_existing=True
+        )
+
+        # Рассказ о животном в 11:00
+        scheduler.add_job(
+            send_daily_animal,
+            CronTrigger(hour=11, minute=0),
+            args=[app],
+            id='daily_animal',
             replace_existing=True
         )
 
         scheduler.start()
-        logger.info(f"✅ Планировщик запущен. Ежедневная отправка рецептов в {Config.RECIPE_SEND_TIME}")
+        logger.info("✅ Планировщик запущен. Утреннее приветствие в 9:00, рассказ о животном в 11:00")
 
     except Exception as e:
         logger.error(f"❌ Ошибка при запуске планировщика: {e}")
 
 
 def stop_scheduler():
-    """Остановка планировщика."""
+    """Останавливает планировщик."""
     try:
         scheduler.shutdown()
         logger.info("⏹️ Планировщик остановлен")
