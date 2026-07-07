@@ -1,6 +1,6 @@
 # bot/main.py
 """
-Главный модуль бота Пинки Пай.
+Главный модуль бота Флаттершай.
 Инициализация, настройка и запуск бота.
 
 Автор: MADAO81
@@ -21,10 +21,11 @@ from bot.config import Config
 from bot.handlers.commands import (
     start,
     help_command,
-    recipe_command,
-    joke_command,
-    song_command,
     weather_command,
+    petcare_command,
+    calm_command,
+    story_command,
+    kindness_command,
     subscribe_command,
     unsubscribe_command,
     clear_data
@@ -59,7 +60,7 @@ def main():
 
     Автор: MADAO81
     """
-    logger.info(f"🎈 Запуск бота Пинки Пай (v{VERSION})...")
+    logger.info(f"🦋 Запуск бота Флаттершай (v{VERSION})...")
     logger.info(f"👤 Автор: MADAO81")
 
     # Проверяем наличие токена
@@ -89,15 +90,16 @@ def main():
     # Основные команды
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(CommandHandler("recipe", recipe_command))
-    app.add_handler(CommandHandler("joke", joke_command))
-    app.add_handler(CommandHandler("song", song_command))
     app.add_handler(CommandHandler("weather", weather_command))
+    app.add_handler(CommandHandler("petcare", petcare_command))
+    app.add_handler(CommandHandler("calm", calm_command))
+    app.add_handler(CommandHandler("story", story_command))
+    app.add_handler(CommandHandler("kindness", kindness_command))
     app.add_handler(CommandHandler("subscribe", subscribe_command))
     app.add_handler(CommandHandler("unsubscribe", unsubscribe_command))
     app.add_handler(CommandHandler("cleardata", clear_data))
 
-    # Административные команды
+    # Административные команды (оставляем, если нужны)
     app.add_handler(CommandHandler("addrecipe", add_recipe_command))
     app.add_handler(CommandHandler("listrecipes", list_recipes_command))
     app.add_handler(CommandHandler("delrecipe", del_recipe_command))
@@ -108,7 +110,7 @@ def main():
     app.add_handler(MessageHandler(filters.VOICE, handle_voice))
     app.add_handler(MessageHandler(filters.AUDIO, handle_voice))
 
-    # Запускаем планировщик (ежедневная отправка рецептов)
+    # Запускаем планировщик (утреннее приветствие и рассказы о животных)
     start_scheduler(app)
 
     # Запускаем бота
