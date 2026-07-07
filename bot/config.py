@@ -1,6 +1,6 @@
 # bot/config.py
 """
-Конфигурация бота Пинки Пай.
+Конфигурация бота Флаттершай.
 Загрузка переменных окружения из .env файла.
 
 Автор: MADAO81
@@ -41,9 +41,9 @@ class Config:
     # ========== КОНТЕКСТ ==========
     CONTEXT_EXPIRE_DAYS = int(os.getenv("CONTEXT_EXPIRE_DAYS", 30))
 
-    # ========== РЕЦЕПТЫ ==========
-    RECIPE_SEND_TIME = os.getenv("RECIPE_SEND_TIME", "12:00")
-    RECIPE_URL = os.getenv("RECIPE_URL", "https://food.ru")
+    # ========== РАССЫЛКИ ==========
+    MORNING_GREETING_TIME = os.getenv("MORNING_GREETING_TIME", "9:00")
+    DAILY_ANIMAL_TIME = os.getenv("DAILY_ANIMAL_TIME", "11:00")
 
     # ========== АДМИНИСТРАТОР ==========
     ADMIN_ID = os.getenv("ADMIN_ID")
