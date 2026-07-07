@@ -1,6 +1,6 @@
 # bot/services/ai_service.py
 """
-AI service for OpenAI integration (GPT-4-turbo, Vision, Whisper).
+AI service for Fluttershy bot (OpenAI GPT-4-turbo, Vision, Whisper).
 
 Author: MADAO81
 Version: 2.0
@@ -19,12 +19,12 @@ from bot.core.constants import SYSTEM_PROMPT
 logger = logging.getLogger(__name__)
 
 
-async def get_pinkie_response(
+async def get_fluttershy_response(
     user_message: str,
     mood_description: str = "happy",
     context_history: Optional[List[Dict]] = None
 ) -> Optional[str]:
-    """Generates a response from Pinkie Pie using OpenAI."""
+    """Generates a response from Fluttershy using OpenAI."""
     try:
         client = AsyncOpenAI(api_key=Config.OPENAI_API_KEY)
 
@@ -32,13 +32,13 @@ async def get_pinkie_response(
         if mood_description == "sad":
             system_prompt += """
 
-            ⚠️ IMPORTANT: YOU ARE IN A SAD MOOD RIGHT NOW (Pinkamena Diane Pie)!
+            ⚠️ IMPORTANT: YOU ARE IN A SAD MOOD RIGHT NOW!
             - Speak more softly, gently, and slowly
             - Use fewer exclamation marks (maximum 1-2 per message)
-            - Add a touch of melancholy to your jokes
+            - Add a touch of melancholy to your words
             - But remember: you must NOT make others depressed
             - End the message with something reassuring
-            - Avoid excessive energy and bouncing
+            - Avoid excessive energy
             """
 
         messages = [
@@ -81,7 +81,7 @@ async def analyze_image(
     mood_description: str = "happy"
 ) -> Optional[str]:
     """Analyzes an image using OpenAI Vision API."""
-    logger.info("🖼️ Запрос к OpenAI Vision API...")
+    logger.info("🖼️ Request to OpenAI Vision API...")
     try:
         client = AsyncOpenAI(api_key=Config.OPENAI_API_KEY)
 
@@ -113,7 +113,7 @@ async def analyze_image(
             }
         ]
 
-        logger.info("🖼️ Отправка запроса в OpenAI Vision API...")
+        logger.info("🖼️ Sending request to OpenAI Vision API...")
 
         response = await client.chat.completions.create(
             model="gpt-4o",
@@ -126,11 +126,11 @@ async def analyze_image(
         if response.choices and len(response.choices) > 0:
             return response.choices[0].message.content.strip()
         else:
-            logger.warning("⚠️ Vision API вернул пустой ответ")
+            logger.warning("⚠️ Vision API returned empty response")
             return None
 
     except Exception as e:
-        logger.error(f"❌ Ошибка при анализе изображения: {e}")
+        logger.error(f"❌ Error analyzing image: {e}")
         return None
 
 
@@ -155,7 +155,7 @@ async def transcribe_audio(
             transcription = await client.audio.transcriptions.create(
                 model="whisper-1",
                 file=audio_file,
-                language="en"
+                language="ru"
             )
 
         try:
