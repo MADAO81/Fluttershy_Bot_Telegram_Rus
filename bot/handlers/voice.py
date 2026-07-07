@@ -10,7 +10,7 @@ import logging
 from telegram import Update
 from telegram.ext import ContextTypes
 from bot.core.mood_system import MoodSystem
-from bot.services.ai_service import transcribe_audio, get_pinkie_response
+from bot.services.ai_service import transcribe_audio, get_fluttershy_response
 from bot.services.weather_service import WeatherService
 from bot.utils.time_utils import is_working_hours, get_working_status_message
 from bot.core.context_manager import ContextManager
@@ -58,7 +58,7 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         context_history = context_manager.get_context(user_id)
 
-        response = await get_pinkie_response(
+        response = await get_fluttershy_response(
             user_message=transcript,
             mood_description=mood_desc,
             context_history=context_history
