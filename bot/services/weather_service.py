@@ -1,9 +1,10 @@
 # bot/services/weather_service.py
 """
-Weather service using Open-Meteo (free, no API key).
+Сервис погоды для бота Флаттершай.
+Использует Open-Meteo (бесплатно, без ключа).
 
-Author: MADAO81
-Version: 5.3
+Автор: MADAO81
+Версия: 2.0
 """
 
 import logging
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class WeatherService:
     """
-    Weather service using Open-Meteo API (no API key required).
+    Сервис погоды с использованием Open-Meteo API (без ключа).
     """
 
     def __init__(self):
@@ -26,7 +27,7 @@ class WeatherService:
         self.geo_url = "https://geocoding-api.open-meteo.com/v1/search"
 
     async def get_weather(self, lat: Optional[float] = None, lon: Optional[float] = None) -> Optional[Dict]:
-        """Gets current weather by coordinates."""
+        """Получает текущую погоду по координатам."""
         if lat is None or lon is None:
             lat = self.default_lat
             lon = self.default_lon
@@ -50,24 +51,24 @@ class WeatherService:
                         data = await response.json()
                         return self._parse_weather(data, lat, lon)
                     else:
-                        logger.error(f"❌ Open-Meteo error: {response.status}")
+                        logger.error(f"❌ Ошибка Open-Meteo: {response.status}")
                         return None
 
         except aiohttp.ClientError as e:
-            logger.error(f"❌ Connection error: {e}")
+            logger.error(f"❌ Ошибка соединения: {e}")
             return None
         except Exception as e:
-            logger.error(f"❌ Error getting weather: {e}")
+            logger.error(f"❌ Ошибка при получении погоды: {e}")
             return None
 
     async def get_weather_by_city(self, city: str) -> Optional[Dict]:
-        """Gets weather by city name."""
+        """Получает погоду по названию города."""
         if not city:
             return await self.get_weather()
 
         coords = await self.get_city_coordinates(city)
         if not coords:
-            logger.warning(f"⚠️ City not found: {city}")
+            logger.warning(f"⚠️ Город не найден: {city}")
             return None
 
         lat, lon = coords
@@ -77,7 +78,7 @@ class WeatherService:
         return weather
 
     async def get_city_coordinates(self, city: str) -> Optional[Tuple[float, float]]:
-        """Gets city coordinates from Open-Meteo Geocoding API."""
+        """Получает координаты города через Open-Meteo Geocoding API."""
         try:
             params = {
                 "name": city,
@@ -99,17 +100,17 @@ class WeatherService:
                             lat = results[0].get("latitude")
                             lon = results[0].get("longitude")
                             if lat and lon:
-                                logger.info(f"🌍 Found coordinates for {city}: {lat}, {lon}")
+                                logger.info(f"🌍 Найдены координаты для {city}: {lat}, {lon}")
                                 return (lat, lon)
-                    logger.warning(f"⚠️ City '{city}' not found")
+                    logger.warning(f"⚠️ Город '{city}' не найден")
                     return None
 
         except Exception as e:
-            logger.error(f"❌ Error finding city: {e}")
+            logger.error(f"❌ Ошибка при поиске города: {e}")
             return None
 
     def _parse_weather(self, data: Dict, lat: float, lon: float) -> Dict:
-        """Parses weather data from Open-Meteo."""
+        """Парсит данные о погоде из Open-Meteo."""
         try:
             current = data.get("current_weather", {})
             
@@ -125,7 +126,7 @@ class WeatherService:
                 "wind_speed": wind_speed,
                 "condition": self._get_condition(weather_code),
                 "description": self._translate_condition(weather_code),
-                "city_name": "Ворсино" if lat == self.default_lat and lon == self.default_lon else "Unknown",
+                "city_name": "Ворсино" if lat == self.default_lat and lon == self.default_lon else "Неизвестный город",
                 "country": "",
                 "is_bad": self._is_bad_weather(weather_code)
             }
@@ -133,7 +134,7 @@ class WeatherService:
             return weather
 
         except Exception as e:
-            logger.error(f"❌ Error parsing weather: {e}")
+            logger.error(f"❌ Ошибка парсинга погоды: {e}")
             return {
                 "temperature": 0,
                 "feels_like": 0,
@@ -141,14 +142,14 @@ class WeatherService:
                 "pressure": 750,
                 "wind_speed": 0,
                 "condition": "clear",
-                "description": "unknown",
-                "city_name": "Unknown",
+                "description": "неизвестно",
+                "city_name": "Неизвестный город",
                 "country": "",
                 "is_bad": False
             }
 
     def _get_condition(self, code: int) -> str:
-        """Converts Open-Meteo weather code to string."""
+        """Преобразует код погоды Open-Meteo в строку."""
         if code == 0:
             return "clear"
         elif code in [1, 2, 3]:
@@ -181,19 +182,19 @@ class WeatherService:
         return conditions.get(condition, "неизвестно")
 
     def _is_bad_weather(self, code: int) -> bool:
-        """Determines if weather is bad."""
+        """Определяет, плохая ли погода."""
         bad_codes = [45, 48, 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 
                      71, 73, 75, 77, 80, 81, 82, 85, 86, 95, 96, 99]
         return code in bad_codes
 
     def is_bad_weather(self, weather_data: Optional[Dict]) -> bool:
-        """Checks if weather is bad."""
+        """Проверяет, плохая ли погода."""
         if not weather_data:
             return False
         return weather_data.get("is_bad", False)
 
     def get_weather_text(self, weather_data: Optional[Dict], city_display: Optional[str] = None) -> str:
-        """Returns text description of weather."""
+        """Возвращает текстовое описание погоды."""
         if not weather_data:
             return "🌤️ Погода: неизвестно"
 
@@ -201,7 +202,6 @@ class WeatherService:
         description = weather_data.get("description", "неизвестно")
         wind = weather_data.get("wind_speed", 0)
         
-        # Используем переданное название, если есть
         city = city_display if city_display else weather_data.get("city_name", "неизвестном городе")
 
         emoji = "☀️" if not weather_data.get("is_bad", False) else "🌧️"
