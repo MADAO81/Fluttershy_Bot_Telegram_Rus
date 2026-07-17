@@ -13,7 +13,7 @@ import random
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from bot.config import Config
-from bot.services.recipe_service import RecipeService
+
 
 logger = logging.getLogger(__name__)
 

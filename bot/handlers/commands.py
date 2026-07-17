@@ -12,7 +12,7 @@ import random
 from telegram import Update
 from telegram.ext import ContextTypes
 from bot.core.mood_system import MoodSystem
-from bot.services.ai_service import get_pinkie_response  # переименуем позже
+from bot.services.ai_service import get_fluttershy_response
 from bot.services.weather_service import WeatherService
 from bot.utils.time_utils import is_working_hours, get_working_status_message
 from bot.core.constants import VERSION
@@ -168,7 +168,7 @@ async def petcare_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     mood, _ = await mood_system.determine_mood()
     mood_desc = "sad" if mood == "sad" else "happy"
 
-    response = await get_pinkie_response(
+    response = await get_fluttershy_response(
         user_message=f"Пользователь спрашивает: {query}. Дай добрый и полезный совет по уходу за этим животным. Говори мягко, с заботой. Используй нежные эмодзи.",
         mood_description=mood_desc
     )
@@ -193,7 +193,7 @@ async def calm_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     mood, _ = await mood_system.determine_mood()
     mood_desc = "sad" if mood == "sad" else "happy"
 
-    response = await get_pinkie_response(
+    response = await get_fluttershy_response(
         user_message="Предложи короткое и мягкое упражнение для дыхания или визуализации, чтобы помочь человеку успокоиться. Говори тихо, нежно, с заботой. Используй образы природы, цветов, света. В конце добавь тёплое ободряющее слово.",
         mood_description=mood_desc
     )
@@ -218,7 +218,7 @@ async def story_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     mood, _ = await mood_system.determine_mood()
     mood_desc = "sad" if mood == "sad" else "happy"
 
-    response = await get_pinkie_response(
+    response = await get_fluttershy_response(
         user_message="Расскажи короткую вдохновляющую историю о животных, доброте или дружбе. Пусть она будет тёплой и уютной, как чашка чая. Используй мягкие, нежные слова. В конце добавь вывод или мораль.",
         mood_description=mood_desc
     )
@@ -243,7 +243,7 @@ async def kindness_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     mood, _ = await mood_system.determine_mood()
     mood_desc = "sad" if mood == "sad" else "happy"
 
-    response = await get_pinkie_response(
+    response = await get_fluttershy_response(
         user_message="Скажи добрый, тёплый комплимент или ободрение. Говори мягко, искренне, как будто разговариваешь с близким другом. Используй нежные слова и эмодзи. Сделай так, чтобы человек почувствовал себя ценным и любимым.",
         mood_description=mood_desc
     )
